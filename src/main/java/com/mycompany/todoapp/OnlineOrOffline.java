@@ -48,6 +48,7 @@ public class OnlineOrOffline extends javax.swing.JFrame {
         jLabel1.setText("Is your device online or offline?");
 
         buttonGroup1.add(RadioButtonOnline);
+        RadioButtonOnline.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
         RadioButtonOnline.setText("Online");
         RadioButtonOnline.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -56,6 +57,7 @@ public class OnlineOrOffline extends javax.swing.JFrame {
         });
 
         buttonGroup1.add(RadioButtonOffline);
+        RadioButtonOffline.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
         RadioButtonOffline.setText("Offline");
         RadioButtonOffline.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -76,11 +78,11 @@ public class OnlineOrOffline extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(66, 66, 66)
+                .addGap(65, 65, 65)
                 .addComponent(RadioButtonOnline, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 88, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 72, Short.MAX_VALUE)
                 .addComponent(RadioButtonOffline, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(46, 46, 46))
+                .addGap(63, 63, 63))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(153, 153, 153)
                 .addComponent(ButtonContinue)
@@ -95,7 +97,7 @@ public class OnlineOrOffline extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(RadioButtonOnline)
                     .addComponent(RadioButtonOffline))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 86, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 70, Short.MAX_VALUE)
                 .addComponent(ButtonContinue)
                 .addGap(41, 41, 41))
         );

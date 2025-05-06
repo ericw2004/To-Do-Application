@@ -24,9 +24,6 @@ public class TaskDatabase implements Serializable{
     //constructor i guess
     public TaskDatabase() {
 
-<<<<<<< HEAD
-        
-=======
         //this will add some basic tasks whether it's online or offline
         Task task1 = new Task(12, 45, "Fold laundry");
         Task task2 = new Task(10, 00, "Wash dishes");
@@ -39,7 +36,6 @@ public class TaskDatabase implements Serializable{
         taskList.add(task3);
         taskList.add(task4);
         taskList.add(task5);
->>>>>>> 8c6b7bc93aeeeab7ecd8d7b2caefd9bae4b6a648
     }
 
     //get task list method - for the GUI so we can put it into a table

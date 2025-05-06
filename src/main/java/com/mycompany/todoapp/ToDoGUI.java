@@ -1,0 +1,805 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
+ */
+package com.mycompany.todoapp;
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.time.LocalDate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
+/**
+ *
+ * @author Sound Room
+ */
+//notes:
+//for the online version, after every action, update the database and the table and clear the text fields.
+//for the offline version, after every action, just update the table and clear the text fields.
+public class ToDoGUI extends javax.swing.JFrame{
+
+    /**
+     * Creates new form ToDoGUI
+     *
+     * @param OnlineOrOffline
+     */
+    //eric's local date variable and workout variables
+    LocalDate current;
+
+    WorkoutGenerator workGen;
+    WorkoutAPITest wapit;
+
+    //online or offline - defaults to offline
+    static int InternetStatus = 2;
+
+    //create database object
+    public TaskDatabase db;
+
+    // Create the table model with data and column names
+    private DefaultTableModel model;
+
+    // Column names for the JTable
+    private final String[] columnNames = {"Task", "Time due", "Completed?"};
+
+    //display table method - so we can call it inside both online and offline statuses
+    public void displayTable() {
+
+        // Create the table model with data and column names
+        //and make it uneditable
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+
+            //thank you stackoverflow
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                //all cells false
+                return false;
+            }
+        };
+
+        // Add rows to the table model from the ArrayList
+        for (Task task : db.getTaskList()) {
+
+            //put the time together as a string
+            String item = Integer.toString(task.getHourDue()) + ":" + Integer.toString(task.getMinuteDue());
+
+            //catch to see if one is 0 so we can add another 0 
+            //(like if it was 10:00, the computer writes it as 10:0, this is fixing that)
+            if (task.getHourDue() == 0) {
+                item = Integer.toString(task.getHourDue()) + "0:" + Integer.toString(task.getMinuteDue());
+
+            }
+
+            if (task.getMinuteDue() == 0) {
+                item = Integer.toString(task.getHourDue()) + ":" + Integer.toString(task.getMinuteDue()) + "0";
+
+            }
+
+            String[] row = {task.getTaskName(), item, Boolean.toString(task.isCompleted())};
+            model.addRow(row);
+        }
+        jTable1.setModel(model);
+
+    }
+
+    //reset method
+    public void reset() {
+
+        //if it's online we update the database
+        if (InternetStatus == 1) {
+            db.updateDatabase();
+
+        }
+
+        //update task count
+        updateTaskCount();
+
+        //then we update the table
+        displayTable();
+
+        //make the text field empty
+        TextFieldAddHourDue.setText("");
+        TextFieldAddMinuteDue.setText("");
+        TextFieldAddTaskName.setText("");
+        TextFieldTaskNameOld.setText("");
+        TextFieldTaskNameNew.setText("");
+        TextFieldAddTaskName.setText("");
+
+    }
+
+    //update task count method
+    public void updateTaskCount() {
+
+        LabelTaskCount.setText(Integer.toString(db.countCompletedTasks()) + "/" + Integer.toString(db.countTasks()) + " tasks completed.");
+
+        //if all of them are completed we add an exclamation point for fun
+        if (db.countCompletedTasks() == db.countTasks()) {
+            LabelTaskCount.setText(Integer.toString(db.countCompletedTasks()) + "/" + Integer.toString(db.countTasks()) + " tasks completed!!");
+        }
+    }
+
+    public ToDoGUI(int OnlineOrOffline) throws FileNotFoundException, IOException, IOException, ClassNotFoundException {
+        initComponents();
+
+        //put it in the middle of the screen
+        setLocationRelativeTo(null);
+
+        this.InternetStatus = OnlineOrOffline;
+        File file = new File("test.ser");
+        if(file.length() == 0){
+            db = new TaskDatabase();
+        }else{
+           InputStream is = new FileInputStream("test.ser");
+           ObjectInputStream ois = new ObjectInputStream(is);
+           db = (TaskDatabase)ois.readObject();
+           ois.close();
+        }
+        //make this visible
+        this.setVisible(true);
+
+        //set the title
+        this.setTitle("To-Do App");
+
+        //task count
+        updateTaskCount();
+
+        //displaying the table for both online and offline
+        displayTable();
+
+        //ONLINE - only thing we do here is create the mongo database
+        if (InternetStatus == 1) {
+
+            //create/update initial database on mongodb
+            db.updateDatabase();
+
+        }
+
+        //add eric's date
+        current = LocalDate.now();
+        LabelDate.setText(current.toString());
+
+        //and workout variables
+        wapit = new WorkoutAPITest();
+        workGen = new WorkoutGenerator(this, wapit);
+        
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosing(WindowEvent e){
+            try {
+                ClosingOp();
+            } catch (IOException ex) {
+                Logger.getLogger(ToDoGUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        });
+    }
+    
+    public void ClosingOp() throws IOException{
+        this.save();
+        this.dispose();
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jPanel1 = new javax.swing.JPanel();
+        LabelTaskCount = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+        jPanel2 = new javax.swing.JPanel();
+        ButtonComplete = new javax.swing.JButton();
+        jPanel3 = new javax.swing.JPanel();
+        jLabel3 = new javax.swing.JLabel();
+        TextFieldAddTaskName = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
+        TextFieldAddHourDue = new javax.swing.JTextField();
+        jLabel6 = new javax.swing.JLabel();
+        TextFieldAddMinuteDue = new javax.swing.JTextField();
+        ButtonAddTask = new javax.swing.JButton();
+        jPanel4 = new javax.swing.JPanel();
+        ButtonRemoveTask = new javax.swing.JButton();
+        jPanel5 = new javax.swing.JPanel();
+        jLabel10 = new javax.swing.JLabel();
+        TextFieldTaskNameOld = new javax.swing.JTextField();
+        TextFieldTaskNameNew = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
+        jPanel6 = new javax.swing.JPanel();
+        ButtonClear = new javax.swing.JButton();
+        jPanel7 = new javax.swing.JPanel();
+        ButtonWorkout = new javax.swing.JButton();
+        LabelDate = new javax.swing.JLabel();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        jPanel1.setBackground(new java.awt.Color(0, 51, 102));
+
+        LabelTaskCount.setBackground(new java.awt.Color(255, 255, 255));
+        LabelTaskCount.setFont(new java.awt.Font("Segoe UI", 3, 12)); // NOI18N
+        LabelTaskCount.setForeground(new java.awt.Color(255, 255, 255));
+        LabelTaskCount.setText("Task Count");
+
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Task", "Time Due", "Completed?"
+            }
+
+        )
+
+    );
+    jTable1.getTableHeader().setReorderingAllowed(false);
+    jScrollPane1.setViewportView(jTable1);
+
+    jPanel2.setBackground(new java.awt.Color(153, 153, 153));
+    jPanel2.setForeground(new java.awt.Color(204, 204, 204));
+
+    ButtonComplete.setText("Complete Task");
+    ButtonComplete.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            ButtonCompleteActionPerformed(evt);
+        }
+    });
+
+    javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+    jPanel2.setLayout(jPanel2Layout);
+    jPanel2Layout.setHorizontalGroup(
+        jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel2Layout.createSequentialGroup()
+            .addContainerGap()
+            .addComponent(ButtonComplete, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(47, Short.MAX_VALUE))
+    );
+    jPanel2Layout.setVerticalGroup(
+        jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel2Layout.createSequentialGroup()
+            .addContainerGap()
+            .addComponent(ButtonComplete)
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+
+    jPanel3.setBackground(new java.awt.Color(153, 153, 153));
+
+    jLabel3.setBackground(new java.awt.Color(255, 255, 255));
+    jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+    jLabel3.setText("Task Name:");
+
+    TextFieldAddTaskName.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            TextFieldAddTaskNameActionPerformed(evt);
+        }
+    });
+
+    jLabel5.setBackground(new java.awt.Color(255, 255, 255));
+    jLabel5.setForeground(new java.awt.Color(255, 255, 255));
+    jLabel5.setText("Time Due:");
+
+    jLabel6.setBackground(new java.awt.Color(255, 255, 255));
+    jLabel6.setForeground(new java.awt.Color(255, 255, 255));
+    jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    jLabel6.setText(":");
+
+    ButtonAddTask.setText("Add Task");
+    ButtonAddTask.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            ButtonAddTaskActionPerformed(evt);
+        }
+    });
+
+    javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+    jPanel3.setLayout(jPanel3Layout);
+    jPanel3Layout.setHorizontalGroup(
+        jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel3Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 68, Short.MAX_VALUE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(jPanel3Layout.createSequentialGroup()
+                    .addComponent(TextFieldAddHourDue, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 8, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(TextFieldAddMinuteDue, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(TextFieldAddTaskName))
+            .addGap(6, 6, 6))
+        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(ButtonAddTask)
+            .addContainerGap())
+    );
+    jPanel3Layout.setVerticalGroup(
+        jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel3Layout.createSequentialGroup()
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jLabel3)
+                .addComponent(TextFieldAddTaskName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jLabel5)
+                .addComponent(TextFieldAddHourDue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel6)
+                .addComponent(TextFieldAddMinuteDue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(ButtonAddTask)
+            .addContainerGap())
+    );
+
+    jPanel4.setBackground(new java.awt.Color(153, 153, 153));
+
+    ButtonRemoveTask.setText("Remove Task");
+    ButtonRemoveTask.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            ButtonRemoveTaskActionPerformed(evt);
+        }
+    });
+
+    javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+    jPanel4.setLayout(jPanel4Layout);
+    jPanel4Layout.setHorizontalGroup(
+        jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel4Layout.createSequentialGroup()
+            .addContainerGap()
+            .addComponent(ButtonRemoveTask, javax.swing.GroupLayout.DEFAULT_SIZE, 215, Short.MAX_VALUE)
+            .addContainerGap())
+    );
+    jPanel4Layout.setVerticalGroup(
+        jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel4Layout.createSequentialGroup()
+            .addContainerGap()
+            .addComponent(ButtonRemoveTask)
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+
+    jPanel5.setBackground(new java.awt.Color(153, 153, 153));
+
+    jLabel10.setBackground(new java.awt.Color(255, 255, 255));
+    jLabel10.setForeground(new java.awt.Color(255, 255, 255));
+    jLabel10.setText("Task Name:");
+
+    TextFieldTaskNameOld.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            TextFieldTaskNameOldActionPerformed(evt);
+        }
+    });
+
+    TextFieldTaskNameNew.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            TextFieldTaskNameNewActionPerformed(evt);
+        }
+    });
+
+    jLabel11.setBackground(new java.awt.Color(255, 255, 255));
+    jLabel11.setForeground(new java.awt.Color(255, 255, 255));
+    jLabel11.setText("New Task Name:");
+
+    jButton1.setText("Change Name");
+    jButton1.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton1ActionPerformed(evt);
+        }
+    });
+
+    javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+    jPanel5.setLayout(jPanel5Layout);
+    jPanel5Layout.setHorizontalGroup(
+        jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel5Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel5Layout.createSequentialGroup()
+                    .addComponent(jLabel10)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(TextFieldTaskNameOld))
+                .addGroup(jPanel5Layout.createSequentialGroup()
+                    .addComponent(jLabel11)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(TextFieldTaskNameNew, javax.swing.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE))
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(jButton1)))
+            .addContainerGap())
+    );
+    jPanel5Layout.setVerticalGroup(
+        jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel5Layout.createSequentialGroup()
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(TextFieldTaskNameOld, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel10))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(TextFieldTaskNameNew, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel11))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jButton1)
+            .addContainerGap())
+    );
+
+    jPanel6.setBackground(new java.awt.Color(153, 153, 153));
+
+    ButtonClear.setText("Clear");
+    ButtonClear.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            ButtonClearActionPerformed(evt);
+        }
+    });
+
+    javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+    jPanel6.setLayout(jPanel6Layout);
+    jPanel6Layout.setHorizontalGroup(
+        jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel6Layout.createSequentialGroup()
+            .addContainerGap()
+            .addComponent(ButtonClear, javax.swing.GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
+            .addContainerGap())
+    );
+    jPanel6Layout.setVerticalGroup(
+        jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel6Layout.createSequentialGroup()
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(ButtonClear)
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+
+    jPanel7.setBackground(new java.awt.Color(153, 153, 153));
+
+    ButtonWorkout.setText("Generate Workout");
+    ButtonWorkout.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            ButtonWorkoutActionPerformed(evt);
+        }
+    });
+
+    javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
+    jPanel7.setLayout(jPanel7Layout);
+    jPanel7Layout.setHorizontalGroup(
+        jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel7Layout.createSequentialGroup()
+            .addContainerGap()
+            .addComponent(ButtonWorkout, javax.swing.GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
+            .addContainerGap())
+    );
+    jPanel7Layout.setVerticalGroup(
+        jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel7Layout.createSequentialGroup()
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(ButtonWorkout)
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+
+    LabelDate.setBackground(new java.awt.Color(255, 255, 255));
+    LabelDate.setForeground(new java.awt.Color(255, 255, 255));
+    LabelDate.setText("Date");
+
+    javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+    jPanel1.setLayout(jPanel1Layout);
+    jPanel1Layout.setHorizontalGroup(
+        jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel1Layout.createSequentialGroup()
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 446, Short.MAX_VALUE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addComponent(LabelTaskCount, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(LabelDate, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+    );
+    jPanel1Layout.setVerticalGroup(
+        jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(LabelTaskCount)
+                .addComponent(LabelDate))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(12, 12, 12)
+            .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(12, 12, 12)
+            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(12, 12, 12)
+            .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
+            .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(12, 12, 12)
+            .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(18, 18, 18))
+        .addComponent(jScrollPane1)
+    );
+
+    javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+    getContentPane().setLayout(layout);
+    layout.setHorizontalGroup(
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+    );
+    layout.setVerticalGroup(
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+    );
+
+    pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void ButtonCompleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonCompleteActionPerformed
+
+        //complete the task and update the database when they complete a task
+        try {
+            int column = 0;
+            int row = jTable1.getSelectedRow();
+            String taskName = jTable1.getModel().getValueAt(row, column).toString();
+
+            db.completeTask(taskName);
+            reset();
+
+        } catch (Exception e) {
+        }
+
+
+    }//GEN-LAST:event_ButtonCompleteActionPerformed
+
+//    public static void setDb(TaskDatabase db) {
+//        ToDoGUI.db = db;
+//    }
+
+    private void TextFieldAddTaskNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TextFieldAddTaskNameActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_TextFieldAddTaskNameActionPerformed
+
+    private void ButtonAddTaskActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonAddTaskActionPerformed
+
+        try {
+
+            //double zero catcher -
+            if (!TextFieldAddTaskName.getText().equalsIgnoreCase("") && (TextFieldAddHourDue.getText().equalsIgnoreCase("00")) || (TextFieldAddMinuteDue.getText().equalsIgnoreCase("00"))) {
+
+                //more specific double zero catcher - if the hour is 00 (like midnight)
+                if ((TextFieldAddHourDue.getText().equalsIgnoreCase("00"))) {
+
+                    //then we add the task
+                    db.addTask(TextFieldAddTaskName.getText(), Integer.parseInt("00"), Integer.parseInt(TextFieldAddMinuteDue.getText()));
+
+                }
+
+                //if the minute is 00
+                if ((TextFieldAddMinuteDue.getText().equalsIgnoreCase("00"))) {
+
+                    //then we add the task
+                    db.addTask(TextFieldAddTaskName.getText(), Integer.parseInt(TextFieldAddHourDue.getText()), Integer.parseInt("00"));
+
+                }
+
+                reset();
+
+            }
+
+            //main conditional
+            //if every text field is filled with the right format:
+            //(we check if the task name isn't empty, and we check if the time matches the integer version of itself
+            //(and if the length of both time vars is equal to 2)
+            if (!TextFieldAddTaskName.getText().equalsIgnoreCase("") && (TextFieldAddHourDue.getText().equalsIgnoreCase(Integer.toString(Integer.parseInt(TextFieldAddHourDue.getText())))) && (TextFieldAddMinuteDue.getText().equalsIgnoreCase(Integer.toString(Integer.parseInt(TextFieldAddMinuteDue.getText())))) && ((TextFieldAddHourDue.getText().length() == 2 || (TextFieldAddHourDue.getText().equalsIgnoreCase("1") || TextFieldAddHourDue.getText().equalsIgnoreCase("2") || TextFieldAddHourDue.getText().equalsIgnoreCase("3") || TextFieldAddHourDue.getText().equalsIgnoreCase("4") || TextFieldAddHourDue.getText().equalsIgnoreCase("5") || TextFieldAddHourDue.getText().equalsIgnoreCase("6") || TextFieldAddHourDue.getText().equalsIgnoreCase("7") || TextFieldAddHourDue.getText().equalsIgnoreCase("8") || TextFieldAddHourDue.getText().equalsIgnoreCase("9") || TextFieldAddHourDue.getText().equalsIgnoreCase("0"))) && TextFieldAddMinuteDue.getText().length() == 2)) {
+
+                //then we add the task
+                db.addTask(TextFieldAddTaskName.getText(), Integer.parseInt(TextFieldAddHourDue.getText()), Integer.parseInt(TextFieldAddMinuteDue.getText()));
+
+                //then if it's online we update the database
+                if (InternetStatus == 1) {
+                    db.updateDatabase();
+
+                }
+
+                reset();
+
+            } else {
+                //if it doesn't match the format just do what the catch would do
+
+                //if they put in something in the wrong format just clear the text fields and no one will know
+                //DO NOT UPDATE THE TABLE OR THE DATABASE AS NOTHING HAS BEEN ADDED
+                //make the text field empty
+                TextFieldAddHourDue.setText("");
+
+                //make the text field empty
+                TextFieldAddMinuteDue.setText("");
+
+                //make the text field empty
+                TextFieldAddTaskName.setText("");
+
+            }
+        } catch (Exception e) {
+
+            //if they put in something in the wrong format just clear the text fields and no one will know
+            //DO NOT UPDATE THE TABLE OR THE DATABASE AS NOTHING HAS BEEN ADDED
+            //make the text field empty
+            TextFieldAddHourDue.setText("");
+
+            //make the text field empty
+            TextFieldAddMinuteDue.setText("");
+
+            //make the text field empty
+            TextFieldAddTaskName.setText("");
+
+        }
+
+
+    }//GEN-LAST:event_ButtonAddTaskActionPerformed
+
+    private void ButtonRemoveTaskActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonRemoveTaskActionPerformed
+
+        //complete the task and update the database when they complete a task
+        try {
+            int column = 0;
+            int row = jTable1.getSelectedRow();
+            String taskName = jTable1.getModel().getValueAt(row, column).toString();
+
+            db.removeTaskByText(taskName);
+            reset();
+
+        } catch (Exception e) {
+        }
+
+    }//GEN-LAST:event_ButtonRemoveTaskActionPerformed
+
+    private void TextFieldTaskNameOldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TextFieldTaskNameOldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_TextFieldTaskNameOldActionPerformed
+
+    private void TextFieldTaskNameNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TextFieldTaskNameNewActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_TextFieldTaskNameNewActionPerformed
+
+    private void ButtonClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonClearActionPerformed
+        
+        //clear the todo list
+        db.clearDatabase();
+
+        reset();
+
+    }//GEN-LAST:event_ButtonClearActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+
+        //remove the task and update the database when they remove a task
+        db.changeTaskName(TextFieldTaskNameOld.getText(), TextFieldTaskNameNew.getText());
+
+        reset();
+
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void ButtonWorkoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonWorkoutActionPerformed
+
+        //if they are not online we say no you can't generate a workout
+        if (InternetStatus == 2) {
+            JOptionPane errorPane = new JOptionPane("Cannot connect to internet.", JOptionPane.ERROR_MESSAGE);
+            JDialog dialog = errorPane.createDialog("Error");
+            dialog.setAlwaysOnTop(true);
+            dialog.setVisible(true);
+
+        } else {
+
+            this.setVisible(false);
+            workGen.setVisible(true);
+
+        }
+
+
+    }//GEN-LAST:event_ButtonWorkoutActionPerformed
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(ToDoGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(ToDoGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(ToDoGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(ToDoGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                try {
+                    new ToDoGUI(InternetStatus).setVisible(true);
+                } catch (IOException ex) {
+                    Logger.getLogger(ToDoGUI.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(ToDoGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+    }
+    
+    public void newWorkoutGen(){
+        workGen = new WorkoutGenerator(this, wapit);
+    }
+    
+    public void save() throws FileNotFoundException, IOException{
+        try{
+            OutputStream os = new FileOutputStream("test.ser");
+            ObjectOutputStream oos = new ObjectOutputStream(os);
+            oos.writeObject(db);
+            System.out.println("App Data Saved.");
+            oos.close();
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton ButtonAddTask;
+    private javax.swing.JButton ButtonClear;
+    private javax.swing.JButton ButtonComplete;
+    private javax.swing.JButton ButtonRemoveTask;
+    private javax.swing.JButton ButtonWorkout;
+    private javax.swing.JLabel LabelDate;
+    private javax.swing.JLabel LabelTaskCount;
+    private javax.swing.JTextField TextFieldAddHourDue;
+    private javax.swing.JTextField TextFieldAddMinuteDue;
+    private javax.swing.JTextField TextFieldAddTaskName;
+    private javax.swing.JTextField TextFieldTaskNameNew;
+    private javax.swing.JTextField TextFieldTaskNameOld;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jPanel7;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable jTable1;
+    // End of variables declaration//GEN-END:variables
+}
